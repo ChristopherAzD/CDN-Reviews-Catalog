@@ -1,5 +1,6 @@
 (function () {
   var STYLE_ID = 'ww-reviews-widget-styles';
+  var EXPANDED_REVIEWS = Object.create(null);
 
   function ensureStyles() {
     if (document.getElementById(STYLE_ID)) return;
@@ -7,21 +8,52 @@
     var style = document.createElement('style');
     style.id = STYLE_ID;
     style.textContent = [
-      '.ww-reviews-widget{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;border:1px solid #e5e7eb;border-radius:14px;padding:16px;background:#fff;color:#111827;box-shadow:0 10px 30px rgba(17,24,39,.06)}',
-      '.ww-reviews-header{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px}',
-      '.ww-business{display:flex;gap:10px;align-items:center}',
-      '.ww-business-logo{width:40px;height:40px;border-radius:9999px;object-fit:cover;border:1px solid #e5e7eb;background:#f3f4f6}',
-      '.ww-business-name{font-size:16px;font-weight:700;line-height:1.2}',
-      '.ww-rating{font-size:14px;color:#4b5563}',
-      '.ww-stars{color:#f59e0b;letter-spacing:2px;font-size:14px}',
-      '.ww-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}',
-      '.ww-card{border:1px solid #e5e7eb;border-radius:12px;padding:12px;background:#fafafa}',
-      '.ww-card-head{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:6px}',
-      '.ww-user{font-weight:600;font-size:14px;color:#111827}',
-      '.ww-source{font-size:12px;color:#6b7280}',
-      '.ww-comment{font-size:13px;line-height:1.45;color:#374151;margin:0}',
+      '.ww-reviews-widget{--ww-bg:#ffffff;--ww-surface:#f7f7f8;--ww-surface-strong:#f1f1f3;--ww-border:#ececee;--ww-text:#101828;--ww-muted:#8b92a6;--ww-star:#ffbf1a;--ww-primary:#2d7ff9;--ww-shadow:0 18px 44px rgba(16,24,40,.08);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;border:1px solid var(--ww-border);border-radius:24px;padding:16px;background:linear-gradient(180deg,#fff 0%,#fbfbfc 100%);color:var(--ww-text);box-shadow:var(--ww-shadow)}',
+      '.ww-tabs{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:0 2px 14px;border-bottom:1px solid var(--ww-border);margin-bottom:18px;overflow:auto hidden;scrollbar-width:none}',
+      '.ww-tabs::-webkit-scrollbar{display:none}',
+      '.ww-tab{display:inline-flex;align-items:center;gap:10px;border:0;background:transparent;border-radius:999px;padding:10px 14px;font-size:15px;font-weight:500;color:#1f2937;cursor:pointer;white-space:nowrap;transition:background-color .2s ease,color .2s ease,box-shadow .2s ease}',
+      '.ww-tab:hover{background:#f3f4f6}',
+      '.ww-tab.is-active{background:var(--ww-surface-strong);box-shadow:inset 0 -2px 0 #111827}',
+      '.ww-tab-label{display:inline-flex;align-items:center;gap:8px}',
+      '.ww-tab-score{font-weight:700}',
+      '.ww-tab-icon{width:22px;height:22px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex:none}',
+      '.ww-tab-icon.is-google{background:conic-gradient(from 210deg,#4285f4 0 25%,#34a853 25% 50%,#fbbc05 50% 75%,#ea4335 75% 100%)}',
+      '.ww-tab-icon.is-homeadvisor{background:linear-gradient(135deg,#f59e0b,#fb7185)}',
+      '.ww-tab-icon.is-yelp{background:#ef4444}',
+      '.ww-tab-icon.is-facebook{background:#1877f2}',
+      '.ww-tab-icon.is-default{background:#64748b}',
+      '.ww-overview{display:flex;justify-content:space-between;gap:18px;align-items:center;flex-wrap:wrap;padding:28px;background:linear-gradient(135deg,#ffffff 0%,#f5f7fb 100%);border:1px solid var(--ww-border);border-radius:18px;margin-bottom:22px}',
+      '.ww-overview-copy{display:flex;flex-direction:column;gap:10px;min-width:220px}',
+      '.ww-overview-title{font-size:18px;font-weight:700;line-height:1.2}',
+      '.ww-overview-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap}',
+      '.ww-overview-score{font-size:21px;font-weight:800;line-height:1}',
+      '.ww-rating-count{font-size:14px;color:var(--ww-muted)}',
+      '.ww-stars{color:var(--ww-star);letter-spacing:2px;font-size:26px;line-height:1}',
+      '.ww-business{display:flex;gap:12px;align-items:center}',
+      '.ww-business-logo{width:48px;height:48px;border-radius:16px;object-fit:cover;border:1px solid var(--ww-border);background:#f3f4f6}',
+      '.ww-business-name{font-size:14px;font-weight:600;color:var(--ww-muted)}',
+      '.ww-write-review{display:inline-flex;align-items:center;justify-content:center;min-width:136px;padding:13px 20px;border-radius:10px;background:var(--ww-primary);color:#fff;text-decoration:none;font-size:15px;font-weight:700;box-shadow:0 10px 24px rgba(45,127,249,.25);transition:transform .2s ease,box-shadow .2s ease}',
+      '.ww-write-review:hover{transform:translateY(-1px);box-shadow:0 14px 28px rgba(45,127,249,.3)}',
+      '.ww-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:22px}',
+      '.ww-card{border:1px solid var(--ww-border);border-radius:16px;padding:26px 26px 22px;background:linear-gradient(180deg,#fff 0%,#fafafb 100%);min-height:246px;display:flex;flex-direction:column;box-shadow:0 8px 24px rgba(15,23,42,.05)}',
+      '.ww-card-head{display:flex;gap:14px;align-items:flex-start;margin-bottom:16px}',
+      '.ww-avatar{width:44px;height:44px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#fff;flex:none;text-transform:lowercase}',
+      '.ww-card-meta{min-width:0;display:flex;flex-direction:column;gap:3px}',
+      '.ww-user{font-weight:700;font-size:15px;color:var(--ww-text);line-height:1.3;word-break:break-word}',
+      '.ww-date{font-size:14px;color:var(--ww-muted)}',
+      '.ww-card-stars{color:var(--ww-star);letter-spacing:2px;font-size:18px;margin-bottom:12px;line-height:1}',
+      '.ww-comment{font-size:16px;line-height:1.55;color:#243041;margin:0 0 8px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}',
+      '.ww-comment.is-expanded{display:block;-webkit-line-clamp:unset;overflow:visible}',
+      '.ww-read-more{border:0;padding:0;background:transparent;color:#7c8597;font-size:14px;font-weight:500;cursor:pointer;align-self:flex-start;margin-bottom:auto}',
+      '.ww-card-footer{display:flex;align-items:center;gap:10px;margin-top:22px;color:#7c8597;font-size:14px}',
+      '.ww-source-stack{display:flex;flex-direction:column;line-height:1.15}',
+      '.ww-source-note{font-size:12px;color:#a0a6b5}',
+      '.ww-source-name{font-size:15px;color:#3b82f6;font-weight:500}',
+      '.ww-source-badge{width:30px;height:30px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex:none}',
+      '.ww-empty{border:1px dashed var(--ww-border);border-radius:16px;padding:32px;background:#fafafa;color:#667085;text-align:center;font-size:15px}',
       '.ww-error{border:1px solid #fecaca;background:#fef2f2;color:#991b1b;border-radius:10px;padding:10px;font-size:13px}',
       '.ww-loading{font-size:13px;color:#6b7280}',
+      '@media (max-width:700px){.ww-reviews-widget{padding:14px;border-radius:18px}.ww-tabs{gap:8px;padding-bottom:12px;margin-bottom:14px}.ww-tab{padding:9px 12px;font-size:14px}.ww-overview{padding:20px}.ww-overview-title{font-size:16px}.ww-overview-score{font-size:18px}.ww-stars{font-size:22px}.ww-grid{grid-template-columns:1fr;gap:16px}.ww-card{padding:20px;min-height:0}.ww-comment{font-size:15px}}',
     ].join('');
 
     document.head.appendChild(style);
@@ -37,6 +69,199 @@
     if (className) el.className = className;
     if (typeof text === 'string') el.textContent = text;
     return el;
+  }
+
+  function slugify(value) {
+    return String(value || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
+  function normalizeSource(value) {
+    return String(value || 'Unknown').trim() || 'Unknown';
+  }
+
+  function getSourceClass(source) {
+    var slug = slugify(source);
+    if (slug.indexOf('google') !== -1) return 'is-google';
+    if (slug.indexOf('homeadvisor') !== -1 || slug.indexOf('home-advisor') !== -1) return 'is-homeadvisor';
+    if (slug.indexOf('yelp') !== -1) return 'is-yelp';
+    if (slug.indexOf('facebook') !== -1) return 'is-facebook';
+    return 'is-default';
+  }
+
+  function getSourceLetter(source) {
+    return normalizeSource(source).charAt(0).toUpperCase() || 'R';
+  }
+
+  function getReviewText(review) {
+    return review.commentary || review.comment || review.content || review.text || review.body || '';
+  }
+
+  function getReviewDate(review) {
+    var keys = ['createdAt', 'created_at', 'publishedAt', 'published_at', 'date', 'reviewDate', 'timestamp', 'time'];
+    var index;
+
+    for (index = 0; index < keys.length; index += 1) {
+      if (!review[keys[index]]) continue;
+      var parsed = new Date(review[keys[index]]);
+      if (!isNaN(parsed.getTime())) return parsed;
+    }
+
+    return null;
+  }
+
+  function formatRelativeDate(date) {
+    if (!date) return 'Recently';
+
+    var diffMs = date.getTime() - Date.now();
+    var units = [
+      { name: 'year', value: 1000 * 60 * 60 * 24 * 365 },
+      { name: 'month', value: 1000 * 60 * 60 * 24 * 30 },
+      { name: 'week', value: 1000 * 60 * 60 * 24 * 7 },
+      { name: 'day', value: 1000 * 60 * 60 * 24 },
+      { name: 'hour', value: 1000 * 60 * 60 },
+      { name: 'minute', value: 1000 * 60 },
+    ];
+    var index;
+
+    for (index = 0; index < units.length; index += 1) {
+      var unit = units[index];
+      var amount = diffMs / unit.value;
+      if (Math.abs(amount) >= 1) {
+        var rounded = Math.round(amount);
+        if (typeof Intl !== 'undefined' && Intl.RelativeTimeFormat) {
+          return new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(rounded, unit.name);
+        }
+        return rounded < 0 ? Math.abs(rounded) + ' ' + unit.name + (Math.abs(rounded) === 1 ? '' : 's') + ' ago' : 'in ' + rounded + ' ' + unit.name + (rounded === 1 ? '' : 's');
+      }
+    }
+
+    return 'Just now';
+  }
+
+  function hashColor(value) {
+    var text = String(value || 'review');
+    var hash = 0;
+    var index;
+
+    for (index = 0; index < text.length; index += 1) {
+      hash = text.charCodeAt(index) + ((hash << 5) - hash);
+    }
+
+    var palette = ['#0f766e', '#166534', '#1d4ed8', '#4338ca', '#9d174d', '#b45309', '#c2410c', '#7c3aed', '#0f766e', '#9a3412'];
+    return palette[Math.abs(hash) % palette.length];
+  }
+
+  function getInitial(user) {
+    var text = String(user || 'R').trim();
+    return text ? text.charAt(0).toUpperCase() : 'R';
+  }
+
+  function createStars(score, className) {
+    return createElement('div', className, stars(score));
+  }
+
+  function getReviewId(review, index) {
+    return slugify([review.user, review.origin, review.date, review.createdAt, index].join('-')) || 'review-' + index;
+  }
+
+  function getWriteReviewUrl(payload) {
+    return payload.writeReviewUrl || payload.reviewUrl || payload.leaveReviewUrl || payload.externalReviewUrl || '';
+  }
+
+  function summarizeSources(reviews) {
+    var summaryMap = Object.create(null);
+
+    reviews.forEach(function (review) {
+      var source = normalizeSource(review.origin);
+      if (!summaryMap[source]) {
+        summaryMap[source] = {
+          source: source,
+          count: 0,
+          total: 0,
+        };
+      }
+
+      summaryMap[source].count += 1;
+      summaryMap[source].total += Number(review.rate) || 0;
+    });
+
+    return Object.keys(summaryMap)
+      .map(function (source) {
+        var item = summaryMap[source];
+        item.avg = item.count ? item.total / item.count : 0;
+        return item;
+      })
+      .sort(function (left, right) {
+        return right.count - left.count;
+      });
+  }
+
+  function renderGrid(grid, reviews) {
+    grid.innerHTML = '';
+
+    if (!reviews.length) {
+      grid.appendChild(createElement('div', 'ww-empty', 'No reviews available for this source.'));
+      return;
+    }
+
+    reviews.forEach(function (review, index) {
+      var card = createElement('article', 'ww-card');
+      var cardHead = createElement('div', 'ww-card-head');
+      var avatar = createElement('div', 'ww-avatar', getInitial(review.user || 'Anonymous'));
+      var cardMeta = createElement('div', 'ww-card-meta');
+      var reviewId = getReviewId(review, index);
+      var reviewText = getReviewText(review);
+      var shouldClamp = reviewText.length > 115;
+      var comment = createElement('p', 'ww-comment', reviewText);
+      var source = normalizeSource(review.origin);
+      var sourceBadge = createElement('div', 'ww-source-badge ' + getSourceClass(source), getSourceLetter(source));
+      var sourceStack = createElement('div', 'ww-source-stack');
+
+      avatar.style.background = hashColor(review.user || reviewId);
+
+      cardMeta.appendChild(createElement('div', 'ww-user', review.user || 'Anonymous'));
+      cardMeta.appendChild(createElement('div', 'ww-date', formatRelativeDate(getReviewDate(review))));
+
+      cardHead.appendChild(avatar);
+      cardHead.appendChild(cardMeta);
+
+      if (EXPANDED_REVIEWS[reviewId]) {
+        comment.className += ' is-expanded';
+      }
+
+      card.appendChild(cardHead);
+      card.appendChild(createStars(review.rate || 0, 'ww-card-stars'));
+      card.appendChild(comment);
+
+      if (shouldClamp) {
+        var readMore = createElement('button', 'ww-read-more', EXPANDED_REVIEWS[reviewId] ? 'Show less' : 'Read more');
+        readMore.type = 'button';
+        readMore.addEventListener('click', function () {
+          EXPANDED_REVIEWS[reviewId] = !EXPANDED_REVIEWS[reviewId];
+          if (EXPANDED_REVIEWS[reviewId]) {
+            comment.classList.add('is-expanded');
+            readMore.textContent = 'Show less';
+          } else {
+            comment.classList.remove('is-expanded');
+            readMore.textContent = 'Read more';
+          }
+        });
+        card.appendChild(readMore);
+      }
+
+      sourceStack.appendChild(createElement('span', 'ww-source-note', 'Posted on'));
+      sourceStack.appendChild(createElement('span', 'ww-source-name', source));
+
+      var footer = createElement('div', 'ww-card-footer');
+      footer.appendChild(sourceBadge);
+      footer.appendChild(sourceStack);
+
+      card.appendChild(footer);
+      grid.appendChild(card);
+    });
   }
 
   function resolveTarget(script, targetId) {
@@ -58,6 +283,7 @@
   function renderWidget(target, payload, options) {
     var reviews = Array.isArray(payload.reviews) ? payload.reviews : [];
     var limitedReviews = reviews.slice(0, options.limit);
+    var sourceSummary = summarizeSources(limitedReviews);
 
     var total = reviews.length;
     var avg = total
@@ -70,9 +296,14 @@
 
     var root = createElement('section', 'ww-reviews-widget');
 
-    var header = createElement('header', 'ww-reviews-header');
-
+    var tabs = createElement('div', 'ww-tabs');
+    var overview = createElement('section', 'ww-overview');
+    var overviewCopy = createElement('div', 'ww-overview-copy');
+    var overviewMeta = createElement('div', 'ww-overview-meta');
     var business = createElement('div', 'ww-business');
+    var grid = createElement('div', 'ww-grid');
+    var activeSource = 'all';
+
     if (payload.logoUrl) {
       var logo = createElement('img', 'ww-business-logo');
       logo.src = payload.logoUrl;
@@ -82,31 +313,81 @@
 
     var businessText = createElement('div');
     businessText.appendChild(createElement('div', 'ww-business-name', payload.businessName || 'Reviews'));
-    businessText.appendChild(createElement('div', 'ww-rating', avg.toFixed(1) + ' / 5 (' + total + ')'));
+    businessText.appendChild(createElement('div', 'ww-overview-title', 'Overall Rating'));
     business.appendChild(businessText);
 
-    var starSummary = createElement('div', 'ww-stars', stars(avg));
+    overviewMeta.appendChild(createElement('div', 'ww-overview-score', avg.toFixed(1)));
+    overviewMeta.appendChild(createStars(avg, 'ww-stars'));
+    overviewMeta.appendChild(createElement('div', 'ww-rating-count', '(' + total + ')'));
 
-    header.appendChild(business);
-    header.appendChild(starSummary);
+    overviewCopy.appendChild(business);
+    overviewCopy.appendChild(overviewMeta);
+    overview.appendChild(overviewCopy);
 
-    var grid = createElement('div', 'ww-grid');
+    var writeReviewUrl = getWriteReviewUrl(payload);
+    if (writeReviewUrl) {
+      var writeReview = createElement('a', 'ww-write-review', 'Write a Review');
+      writeReview.href = writeReviewUrl;
+      writeReview.target = '_blank';
+      writeReview.rel = 'noopener noreferrer';
+      overview.appendChild(writeReview);
+    }
 
-    limitedReviews.forEach(function (review) {
-      var card = createElement('article', 'ww-card');
-      var cardHead = createElement('div', 'ww-card-head');
+    function setActiveTab(source, tabButtons) {
+      activeSource = source;
+      tabButtons.forEach(function (tabButton) {
+        if (tabButton.dataset.source === source) {
+          tabButton.classList.add('is-active');
+        } else {
+          tabButton.classList.remove('is-active');
+        }
+      });
 
-      cardHead.appendChild(createElement('div', 'ww-user', review.user || 'Anonymous'));
-      cardHead.appendChild(createElement('div', 'ww-source', (review.origin || 'Unknown') + ' · ' + (review.rate || 0) + '/5'));
+      renderGrid(
+        grid,
+        source === 'all'
+          ? limitedReviews
+          : limitedReviews.filter(function (review) {
+              return normalizeSource(review.origin) === source;
+            })
+      );
+    }
 
-      card.appendChild(cardHead);
-      card.appendChild(createElement('p', 'ww-comment', review.commentary || ''));
-      grid.appendChild(card);
+    var tabButtons = [];
+
+    function buildTab(label, score, source, iconClass) {
+      var tab = createElement('button', 'ww-tab');
+      var tabLabel = createElement('span', 'ww-tab-label');
+
+      tab.type = 'button';
+      tab.dataset.source = source;
+
+      if (iconClass) {
+        tabLabel.appendChild(createElement('span', 'ww-tab-icon ' + iconClass, getSourceLetter(label)));
+      }
+
+      tabLabel.appendChild(createElement('span', '', label));
+      tab.appendChild(tabLabel);
+      tab.appendChild(createElement('span', 'ww-tab-score', score.toFixed(1)));
+      tab.addEventListener('click', function () {
+        setActiveTab(source, tabButtons);
+      });
+
+      tabButtons.push(tab);
+      tabs.appendChild(tab);
+    }
+
+    buildTab('All Reviews', avg, 'all', '');
+    sourceSummary.forEach(function (item) {
+      buildTab(item.source, item.avg, item.source, getSourceClass(item.source));
     });
 
-    root.appendChild(header);
+    root.appendChild(tabs);
+    root.appendChild(overview);
     root.appendChild(grid);
     target.appendChild(root);
+
+    setActiveTab(activeSource, tabButtons);
   }
 
   function renderError(target, message) {
