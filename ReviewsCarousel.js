@@ -7,7 +7,7 @@
     var style = document.createElement('style');
     style.id = STYLE_ID;
     style.textContent = [
-      '.ww-carousel-widget{--ww-bg:#ffffff;--ww-surface:#f8fafc;--ww-border:#e5e7eb;--ww-text:#0f172a;--ww-muted:#64748b;--ww-star:#f59e0b;--ww-primary:#2563eb;--ww-shadow:0 16px 42px rgba(15,23,42,.08);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;border:1px solid var(--ww-border);border-radius:24px;padding:16px;background:linear-gradient(180deg,#fff 0%,#f8fafc 100%);color:var(--ww-text);box-shadow:var(--ww-shadow);overflow:hidden}',
+      '.ww-carousel-widget{--ww-bg:#ffffff;--ww-surface:#f8fafc;--ww-border:#e5e7eb;--ww-text:#0f172a;--ww-muted:#64748b;--ww-star:#f59e0b;--ww-primary:#2563eb;--ww-shadow:0 16px 42px rgba(15,23,42,.08);--ww-gap:14px;--ww-cards-per-view:3;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;border:1px solid var(--ww-border);border-radius:24px;padding:16px;background:linear-gradient(180deg,#fff 0%,#f8fafc 100%);color:var(--ww-text);box-shadow:var(--ww-shadow);overflow:hidden}',
       '.ww-carousel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}',
       '.ww-carousel-title{font-size:20px;font-weight:800;margin:0}',
       '.ww-carousel-subtitle{font-size:14px;color:var(--ww-muted);margin:2px 0 0}',
@@ -15,8 +15,8 @@
       '.ww-btn{width:36px;height:36px;border-radius:999px;border:1px solid var(--ww-border);background:#fff;color:#1e293b;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:17px;line-height:1;transition:all .2s ease}',
       '.ww-btn:hover{background:#f1f5f9;border-color:#cbd5e1}',
       '.ww-carousel-viewport{overflow:hidden;border-radius:16px}',
-      '.ww-carousel-track{display:flex;gap:14px;will-change:transform;transition:transform .45s ease}',
-      '.ww-review-card{flex:0 0 calc((100% - 28px) / 3);min-height:230px;border:1px solid var(--ww-border);border-radius:16px;background:var(--ww-surface);padding:18px;display:flex;flex-direction:column}',
+      '.ww-carousel-track{display:flex;gap:var(--ww-gap);will-change:transform;transition:transform .45s ease}',
+      '.ww-review-card{flex:0 0 calc((100% - (var(--ww-gap) * (var(--ww-cards-per-view) - 1))) / var(--ww-cards-per-view));min-height:230px;border:1px solid var(--ww-border);border-radius:16px;background:var(--ww-surface);padding:18px;display:flex;flex-direction:column}',
       '.ww-card-top{display:flex;align-items:center;gap:12px;margin-bottom:12px}',
       '.ww-avatar{width:38px;height:38px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;flex:none}',
       '.ww-user{font-size:14px;font-weight:700;line-height:1.2}',
@@ -31,8 +31,7 @@
       '.ww-empty{border:1px dashed var(--ww-border);border-radius:12px;padding:24px;text-align:center;color:var(--ww-muted);font-size:14px;background:#fff}',
       '.ww-error{border:1px solid #fecaca;background:#fef2f2;color:#991b1b;border-radius:10px;padding:10px;font-size:13px}',
       '.ww-loading{font-size:13px;color:#64748b}',
-      '@media (max-width:980px){.ww-review-card{flex-basis:calc((100% - 14px)/2)}}',
-      '@media (max-width:700px){.ww-carousel-widget{padding:14px;border-radius:18px}.ww-carousel-title{font-size:17px}.ww-review-card{flex-basis:100%}.ww-btn{width:32px;height:32px}}',
+      '@media (max-width:700px){.ww-carousel-widget{padding:14px;border-radius:18px}.ww-carousel-title{font-size:17px}.ww-btn{width:32px;height:32px}}',
     ].join('');
 
     document.head.appendChild(style);
@@ -130,9 +129,9 @@
   }
 
   function cardsPerView(viewport) {
-    var width = viewport.clientWidth;
-    if (width <= 700) return 1;
-    if (width <= 980) return 2;
+    var width = Math.round((viewport.getBoundingClientRect && viewport.getBoundingClientRect().width) || viewport.clientWidth || 0);
+    if (width <= 560) return 1;
+    if (width <= 900) return 2;
     return 3;
   }
 
@@ -190,7 +189,8 @@
     }
 
     function build() {
-      state.perView = cardsPerView(track.parentNode);
+      state.perView = Math.min(cardsPerView(track.parentNode), Math.max(1, originalReviews.length));
+      track.style.setProperty('--ww-cards-per-view', String(state.perView));
       state.index = state.perView;
 
       track.innerHTML = '';
@@ -302,6 +302,11 @@
     var reviews = Array.isArray(payload.reviews) ? payload.reviews : [];
     var limitedReviews = reviews.slice(0, options.limit);
 
+    if (typeof target.__wwCarouselCleanup === 'function') {
+      target.__wwCarouselCleanup();
+      target.__wwCarouselCleanup = null;
+    }
+
     target.innerHTML = '';
 
     var root = createElement('section', 'ww-carousel-widget');
@@ -357,7 +362,31 @@
     root.addEventListener('mouseenter', carousel.stopAutoplay);
     root.addEventListener('mouseleave', carousel.restartAutoplay);
 
-    window.addEventListener('resize', carousel.rebuild);
+    var rebuildQueued = false;
+    function rebuildCarousel() {
+      if (rebuildQueued) return;
+      rebuildQueued = true;
+      requestAnimationFrame(function () {
+        rebuildQueued = false;
+        carousel.rebuild();
+      });
+    }
+
+    window.addEventListener('resize', rebuildCarousel);
+
+    var resizeObserver = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(rebuildCarousel);
+      resizeObserver.observe(target);
+      resizeObserver.observe(root);
+      resizeObserver.observe(viewport);
+    }
+
+    target.__wwCarouselCleanup = function () {
+      carousel.stopAutoplay();
+      window.removeEventListener('resize', rebuildCarousel);
+      if (resizeObserver) resizeObserver.disconnect();
+    };
   }
 
   function renderError(target, message) {
