@@ -435,7 +435,10 @@
     var scripts = document.querySelectorAll('script[data-widget-id], script[data-api-key]');
     scripts.forEach(function (script) {
       if (script.__wwMountedDarkGrid) return;
-      if (script.src && script.src.indexOf('ReviewsGridDark.js') === -1) return;
+      var layout = String(script.dataset.layout || '').toLowerCase();
+      var theme = String(script.dataset.theme || '').toLowerCase();
+      if (layout && layout !== 'grid') return;
+      if (theme !== 'black' && theme !== 'dark') return;
       script.__wwMountedDarkGrid = true;
       mountFromScript(script);
     });
