@@ -300,7 +300,7 @@
 
   function renderWidget(target, payload, options) {
     var reviews = Array.isArray(payload.reviews) ? payload.reviews : [];
-    var limitedReviews = reviews.slice(0, options.limit);
+    var limitedReviews = reviews; // Sin límite, muestra todos
 
     if (typeof target.__wwCarouselCleanup === 'function') {
       target.__wwCarouselCleanup();
@@ -401,7 +401,7 @@
     var widgetId = script.dataset.widgetId || script.dataset.apiKey;
     var apiBase = script.dataset.apiBase || window.location.origin;
     var targetId = script.dataset.target;
-    var limit = parseInt(script.dataset.limit || '12', 10);
+    var limit = undefined; // Sin límite
     var autoplayMs = parseInt(script.dataset.autoplayMs || '4200', 10);
 
     if (!widgetId) return;
@@ -421,7 +421,7 @@
       })
       .then(function (payload) {
         renderWidget(target, payload, {
-          limit: Number.isFinite(limit) && limit > 0 ? limit : 12,
+          limit: undefined, // Sin límite
           autoplayMs: Number.isFinite(autoplayMs) && autoplayMs > 0 ? autoplayMs : 4200,
         });
       })
