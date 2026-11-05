@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Creative Reviews Grid — Preview</title>
+  <style>
+    body{margin:0;padding:32px 18px;background:#e9ebf3;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+    main{max-width:1180px;margin:auto}
+    .preview-note{margin:0 0 16px;color:#526072;font-size:13px}
+  </style>
+</head>
+<body>
+  <main>
+    <p class="preview-note">Design preview with sample reviews. Try the source filters, Read more, and View more.</p>
+    <div id="creative-preview"></div>
+  </main>
+  <script>
+    var names = ['Sofia M.', 'Daniel R.', 'Camila P.', 'James T.', 'Emma L.', 'Oliver K.', 'Isabella G.', 'Noah B.', 'Mia C.', 'Lucas F.', 'Ava H.', 'Ethan D.'];
+    var comments = [
+      'Beautiful experience from start to finish. The team was thoughtful, responsive, and made the entire process feel effortless. I would happily recommend them to anyone looking for quality service.',
+      'Everything was exactly as promised. Clear communication and a result that exceeded my expectations.',
+      'What stood out most was the attention to detail. They listened closely to what I needed and came back with a result that felt personal. I have already shared their name with friends and family.',
+      'Friendly people and excellent service. I will definitely be back.',
+      'A really smooth experience. Every question I had was answered quickly, and the final result was fantastic.',
+      'The whole process was simple and enjoyable. I appreciated the care they put into the small things. It made a big difference, and I felt looked after at every step of the way.'
+    ];
+    var sample = {
+      businessName: 'The Good Studio',
+      writeReviewUrl: 'https://example.com',
+      reviews: names.map(function (name, index) {
+        return {
+          user: name,
+          rate: index % 5 === 0 ? 4 : 5,
+          origin: ['Google', 'Yelp', 'Facebook'][index % 3],
+          commentary: comments[index % comments.length],
+          createdAt: new Date(Date.now() - index * 86400000 * 9).toISOString()
+        };
+      })
+    };
+    window.fetch = function () {
+      return Promise.resolve({ ok: true, json: function () { return Promise.resolve(sample); } });
+    };
+  </script>
+  <script src="ReviewsGridCreative.js" data-widget-id="preview" data-target="creative-preview" data-page-size="6"></script>
+</body>
+</html>
