@@ -219,6 +219,7 @@
     target.replaceChildren(el('div', 'wwc-status', 'Loading reviews...'));
     var size = parseInt(script.dataset.pageSize || '8', 10);
     if (!Number.isFinite(size) || size < 1) size = 8;
+    if (size === 6) size = 8;
     var apiBase = script.dataset.apiBase || window.location.origin;
     fetch(apiBase.replace(/\/$/, '') + '/api/reviews/' + encodeURIComponent(widgetId))
       .then(function (response) { if (!response.ok) throw new Error('Reviews unavailable'); return response.json(); })
