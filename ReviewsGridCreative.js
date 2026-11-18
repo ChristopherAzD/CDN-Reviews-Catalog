@@ -188,7 +188,7 @@
       if (!filtered.length) grid.appendChild(el('div', 'wwc-empty', 'No reviews available yet.'));
       filtered.slice(0, shown).forEach(function (review, index) { grid.appendChild(card(review, index)); });
       more.hidden = filtered.length <= shown;
-      more.textContent = 'View more reviews ↓  (' + Math.min(pageSize, filtered.length - shown) + ')';
+      more.textContent = 'View more reviews ↓  (' + Math.max(0, filtered.length - shown) + ')';
     }
 
     function addFilter(label, value) {
@@ -217,8 +217,8 @@
     styles();
     var target = targetFor(script);
     target.replaceChildren(el('div', 'wwc-status', 'Loading reviews...'));
-    var size = parseInt(script.dataset.pageSize || '6', 10);
-    if (!Number.isFinite(size) || size < 1) size = 6;
+    var size = parseInt(script.dataset.pageSize || '8', 10);
+    if (!Number.isFinite(size) || size < 1) size = 8;
     var apiBase = script.dataset.apiBase || window.location.origin;
     fetch(apiBase.replace(/\/$/, '') + '/api/reviews/' + encodeURIComponent(widgetId))
       .then(function (response) { if (!response.ok) throw new Error('Reviews unavailable'); return response.json(); })
